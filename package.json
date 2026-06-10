@@ -1,0 +1,29 @@
+{
+  "name": "codesignal-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remote MCP server exposing CodeSignal GraphQL read and write tools with bring-your-own-key auth",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.26.0",
+    "mcp-handler": "1.1.0",
+    "next": "16.2.8",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "16.2.8",
+    "typescript": "^5.9.3"
+  }
+}
