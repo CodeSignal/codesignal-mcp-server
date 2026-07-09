@@ -22,7 +22,7 @@ export const offsetSchema = z
   .default(0)
   .describe("Number of results to skip, for pagination.");
 
-function getApiKey(authInfo: AuthInfo | undefined): string {
+export function getApiKey(authInfo: AuthInfo | undefined): string {
   const key = authInfo?.token;
   if (!key) {
     throw new CodeSignalApiError(AUTH_ERROR_MESSAGE, 401);
@@ -30,7 +30,7 @@ function getApiKey(authInfo: AuthInfo | undefined): string {
   return key;
 }
 
-function jsonResult(data: unknown): CallToolResult {
+export function jsonResult(data: unknown): CallToolResult {
   return {
     content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
   };

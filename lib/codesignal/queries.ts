@@ -334,26 +334,60 @@ export const GET_INTERVIEW_TEMPLATE = /* GraphQL */ `
   }
 `;
 
-// Certified assessments (CodeSignal-built "frameworks") available to the
-// company. They are returned as StandardizedTest objects.
-export const LIST_CERTIFIED_ASSESSMENTS = /* GraphQL */ `
-  query ListCertifiedAssessments($companyId: ID, $first: Int!, $offset: Int) {
-    certificationTests(companyId: $companyId, first: $first, offset: $offset) {
+// Certified assessments available to the company, returned as Framework nodes.
+// Powers list_certified_assessments. Requires the framework_read permission on
+// the key; list_certified_assessments falls back to LIST_COMPANY_TEST_FRAMEWORKS
+// when the key lacks it.
+export const LIST_FRAMEWORKS = /* GraphQL */ `
+  query ListFrameworks($globalFilter: String, $first: Int!, $offset: Int) {
+    frameworks(globalFilter: $globalFilter, first: $first, offset: $offset) {
+      totalCount
+      pageInfo {
+        hasNextPage
+      }
+      frameworks {
+        id
+        title
+        format
+        duration
+        scoringModel {
+          type
+        }
+        skillSets {
+          name
+        }
+      }
+    }
+  }
+`;
+
+// Frameworks are reachable from company-owned test nodes even when a key lacks
+// framework_read (which the direct frameworks query requires). Tests built from
+// a framework expose it here; tests built from scratch have framework: null.
+export const LIST_COMPANY_TEST_FRAMEWORKS = /* GraphQL */ `
+  query ListCompanyTestFrameworks(
+    $companyId: ID
+    $first: Int!
+    $offset: Int
+  ) {
+    companyTests(companyId: $companyId, first: $first, offset: $offset) {
       totalCount
       pageInfo {
         hasNextPage
       }
       tests {
         id
-        title
-        type
-        duration
-        internalDescription
         framework {
           id
           title
           format
           duration
+          scoringModel {
+            type
+          }
+          skillSets {
+            name
+          }
         }
       }
     }

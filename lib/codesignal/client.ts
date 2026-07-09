@@ -12,13 +12,17 @@ const ACCESS_DENIED_HINT =
   "(keys carry granular permissions, e.g. reading tests, test sessions, or interviews). " +
   "Ask CodeSignal support to enable the relevant permission for your key.";
 
+export type CodeSignalErrorCode = "UNAUTHENTICATED" | "FORBIDDEN";
+
 export class CodeSignalApiError extends Error {
   readonly status?: number;
+  readonly code?: CodeSignalErrorCode;
 
-  constructor(message: string, status?: number) {
+  constructor(message: string, status?: number, code?: CodeSignalErrorCode) {
     super(message);
     this.name = "CodeSignalApiError";
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -33,7 +37,41 @@ interface GraphQLResponse<T> {
   errors?: GraphQLErrorShape[];
 }
 
-function formatGraphQLErrors(errors: GraphQLErrorShape[]): string {
+function classifyGraphQLErrors(
+  errors: GraphQLErrorShape[],
+): CodeSignalErrorCode | undefined {
+  const unauthenticated = errors.some(
+    (error) =>
+      error.extensions?.code === "UNAUTHENTICATED" ||
+      error.message?.toLowerCase().includes("invalid api key"),
+  );
+  if (unauthenticated) {
+    return "UNAUTHENTICATED";
+  }
+
+  const accessDenied = errors.some((error) => {
+    // CodeSignal phrases permission failures inconsistently ("access denied",
+    // "access-denied", "no permission", "permission denied"); normalize
+    // separators so any of those forms maps to the permission hint.
+    const normalized = error.message?.toLowerCase().replace(/[-_]/g, " ");
+    return (
+      error.extensions?.code === "FORBIDDEN" ||
+      Boolean(normalized?.includes("access denied")) ||
+      Boolean(normalized?.includes("no permission")) ||
+      Boolean(normalized?.includes("permission denied"))
+    );
+  });
+  if (accessDenied) {
+    return "FORBIDDEN";
+  }
+
+  return undefined;
+}
+
+function formatGraphQLErrors(
+  errors: GraphQLErrorShape[],
+  code: CodeSignalErrorCode | undefined,
+): string {
   const messages = errors
     .map((error) => {
       const path = error.path?.length ? ` (at ${error.path.join(".")})` : "";
@@ -41,24 +79,12 @@ function formatGraphQLErrors(errors: GraphQLErrorShape[]): string {
     })
     .join("; ");
 
-  const unauthenticated = errors.some(
-    (error) =>
-      error.extensions?.code === "UNAUTHENTICATED" ||
-      error.message?.toLowerCase().includes("invalid api key"),
-  );
-  if (unauthenticated) {
+  if (code === "UNAUTHENTICATED") {
     return `CodeSignal API error: ${messages}. ${INVALID_KEY_HINT}`;
   }
-
-  const accessDenied = errors.some(
-    (error) =>
-      error.extensions?.code === "FORBIDDEN" ||
-      error.message?.toLowerCase().includes("access denied"),
-  );
-  if (accessDenied) {
+  if (code === "FORBIDDEN") {
     return `CodeSignal API error: ${messages}. ${ACCESS_DENIED_HINT}`;
   }
-
   return `CodeSignal API error: ${messages}`;
 }
 
@@ -134,9 +160,11 @@ export async function executeQuery<T = unknown>(
     // CodeSignal returns GraphQL errors at various HTTP statuses (including
     // 200 and 500), so check the errors array before the status code.
     if (parsed?.errors?.length) {
+      const code = classifyGraphQLErrors(parsed.errors);
       throw new CodeSignalApiError(
-        formatGraphQLErrors(parsed.errors),
+        formatGraphQLErrors(parsed.errors, code),
         response.status,
+        code,
       );
     }
 
@@ -144,6 +172,7 @@ export async function executeQuery<T = unknown>(
       throw new CodeSignalApiError(
         `${INVALID_KEY_HINT} (HTTP ${response.status})`,
         response.status,
+        response.status === 403 ? "FORBIDDEN" : "UNAUTHENTICATED",
       );
     }
 
