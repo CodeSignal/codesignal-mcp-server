@@ -2,7 +2,7 @@
 
 Remote [MCP](https://modelcontextprotocol.io) server that exposes the [CodeSignal GraphQL API](https://developer.codesignal.com/graphql/types/) as tools for AI agents: tests (assessments), certified assessments, test sessions (candidate attempts and reports), live interviews, interview templates, questions, users, and roles.
 
-Built with Next.js and [`mcp-handler`](https://github.com/vercel/mcp-handler). The MCP endpoint is served at `/api/mcp` over streamable HTTP.
+Built with Next.js and [`mcp-handler`](https://github.com/vercel/mcp-handler). The official MCP endpoint is served at `https://codesignal.com/api/mcp` over streamable HTTP.
 
 ## Authentication (bring your own key)
 
@@ -19,7 +19,7 @@ Example client configuration:
 {
   "mcpServers": {
     "codesignal": {
-      "url": "https://<your-deployment>/api/mcp",
+      "url": "https://codesignal.com/api/mcp",
       "headers": {
         "Authorization": "Bearer <your CodeSignal API key>"
       }
