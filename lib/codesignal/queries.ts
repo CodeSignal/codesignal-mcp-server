@@ -348,6 +348,7 @@ export const LIST_FRAMEWORKS = /* GraphQL */ `
       frameworks {
         id
         title
+        description
         format
         duration
         scoringModel {
@@ -380,6 +381,7 @@ export const LIST_COMPANY_TEST_FRAMEWORKS = /* GraphQL */ `
         framework {
           id
           title
+          description
           format
           duration
           scoringModel {
@@ -407,6 +409,7 @@ export const GET_STANDARDIZED_TEST = /* GraphQL */ `
       framework {
         id
         title
+        description
         format
         duration
         scoringModel {

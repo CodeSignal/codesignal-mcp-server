@@ -25,6 +25,7 @@ const MAX_PAGES = 200;
 interface CertifiedAssessment {
   id: string;
   title: string;
+  description: string | null;
   format: string | null;
   duration: number;
   scoringModel: { type: string } | null;
