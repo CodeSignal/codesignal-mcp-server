@@ -1,6 +1,10 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { CodeSignalApiError, executeQuery } from "@/lib/codesignal/client";
+import {
+  CODESIGNAL_APP_ORIGIN,
+  CodeSignalApiError,
+  executeQuery,
+} from "@/lib/codesignal/client";
 import {
   LIST_COMPANY_TEST_FRAMEWORKS,
   LIST_FRAMEWORKS,
@@ -158,7 +162,8 @@ export function registerListCertifiedAssessments(server: McpServer) {
         "direct frameworks query (needs the framework_read permission); if the " +
         "key lacks it, falls back to deriving assessments from existing company " +
         "tests — in that mode, assessments not attached to any test are not " +
-        "listed. Durations are milliseconds.",
+        "listed. Durations are milliseconds. Each assessment includes a url " +
+        "linking to its page in the CodeSignal explore-assessments catalog.",
       inputSchema: {
         companyId: z
           .string()
@@ -233,7 +238,12 @@ export function registerListCertifiedAssessments(server: McpServer) {
         const sorted = allAssessments.sort((a, b) =>
           a.title.localeCompare(b.title),
         );
-        const page = sorted.slice(offset, offset + first);
+        // Attach the explore-assessments deep link so consumers link to the
+        // canonical page instead of reconstructing the URL from the id.
+        const page = sorted.slice(offset, offset + first).map((a) => ({
+          ...a,
+          url: `${CODESIGNAL_APP_ORIGIN}/explore-assessments/${a.id}`,
+        }));
 
         return jsonResult({
           source,

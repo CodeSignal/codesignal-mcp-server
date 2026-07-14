@@ -1,4 +1,5 @@
-const CODESIGNAL_GRAPHQL_URL = "https://app.codesignal.com/graphql";
+export const CODESIGNAL_APP_ORIGIN = "https://app.codesignal.com";
+const CODESIGNAL_GRAPHQL_URL = `${CODESIGNAL_APP_ORIGIN}/graphql`;
 const REQUEST_TIMEOUT_MS = 15_000;
 const MAX_RATE_LIMIT_RETRIES = 1;
 const MAX_RETRY_DELAY_MS = 5_000;
