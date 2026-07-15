@@ -66,3 +66,7 @@ Standard Next.js app — deploy to Vercel (or any Next.js host) with no required
 - `lib/auth.ts` — API key extraction (Bearer / `X-CodeSignal-Key`, dev fallback)
 - `lib/codesignal/` — GraphQL client (timeout, rate-limit retry, sanitized errors), query and mutation documents
 - `lib/tools/` — tool registrations (zod input schemas, annotations), shared helpers, registry
+
+## License
+
+[Apache-2.0](LICENSE)

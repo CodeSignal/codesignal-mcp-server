@@ -3,6 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "description": "Remote MCP server exposing CodeSignal GraphQL read and write tools with bring-your-own-key auth",
+  "license": "Apache-2.0",
+  "author": "CodeSignal",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CodeSignal/codesignal-mcp-server.git"
+  },
+  "homepage": "https://github.com/CodeSignal/codesignal-mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/CodeSignal/codesignal-mcp-server/issues"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
