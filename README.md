@@ -6,7 +6,7 @@ Built with Next.js and [`mcp-handler`](https://github.com/vercel/mcp-handler). T
 
 ## Authentication (bring your own key)
 
-Every request must carry the caller's own CodeSignal API key, which is forwarded to the [CodeSignal GraphQL API](https://developer.codesignal.com/graphql/). Keys are never stored or logged.
+In production, every request must carry the caller's own CodeSignal API key, which is forwarded to the [CodeSignal GraphQL API](https://developer.codesignal.com/graphql/). The server does not persist or log caller API keys.
 
 API keys are available on paid CodeSignal plans; see [Creating and Managing API Keys](https://support.codesignal.com/hc/en-us/articles/11151285811223-Creating-and-Managing-API-Keys). Keys carry granular permissions; a permission error from a tool means the key lacks access to that resource.
 
