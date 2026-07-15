@@ -6,14 +6,27 @@ Built with Next.js and [`mcp-handler`](https://github.com/vercel/mcp-handler). T
 
 ## Authentication (bring your own key)
 
-Every request must carry the caller's own CodeSignal API key, which is forwarded to the CodeSignal GraphQL API. Keys are never stored or logged.
+In production, every request must carry the caller's own CodeSignal API key, which is forwarded to the [CodeSignal GraphQL API](https://developer.codesignal.com/graphql/). The server does not persist or log caller API keys.
+
+API keys are available on paid CodeSignal plans; see [Creating and Managing API Keys](https://support.codesignal.com/hc/en-us/articles/11151285811223-Creating-and-Managing-API-Keys). Keys carry granular permissions; a permission error from a tool means the key lacks access to that resource.
 
 Provide the key either way:
 
 - `Authorization: Bearer <your CodeSignal API key>` (preferred)
 - `X-CodeSignal-Key: <your CodeSignal API key>`
 
-Example client configuration:
+## Connecting from a client
+
+The server authenticates with an API key header (no OAuth), so it works with any MCP client that supports custom headers on remote servers. Clients whose remote-server support is OAuth-only (e.g. Claude Desktop connectors) won't work.
+
+Claude Code:
+
+```bash
+claude mcp add --transport http codesignal https://codesignal.com/api/mcp \
+  --header "Authorization: Bearer <your CodeSignal API key>"
+```
+
+Cursor, Windsurf, and other clients with `mcpServers`-style JSON config:
 
 ```json
 {
@@ -27,8 +40,6 @@ Example client configuration:
   }
 }
 ```
-
-Keys are issued by CodeSignal and carry granular permissions; a permission error from a tool means the key lacks access to that resource.
 
 ## Tools
 
@@ -66,3 +77,7 @@ Standard Next.js app — deploy to Vercel (or any Next.js host) with no required
 - `lib/auth.ts` — API key extraction (Bearer / `X-CodeSignal-Key`, dev fallback)
 - `lib/codesignal/` — GraphQL client (timeout, rate-limit retry, sanitized errors), query and mutation documents
 - `lib/tools/` — tool registrations (zod input schemas, annotations), shared helpers, registry
+
+## License
+
+[Apache-2.0](LICENSE)
