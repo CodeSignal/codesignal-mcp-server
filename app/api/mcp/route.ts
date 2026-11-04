@@ -22,8 +22,9 @@ const mcpHandler = createMcpHandler(
       "production data — confirm intent before calling them, and prefer reading " +
       "first to obtain valid IDs. Timestamps and durations are milliseconds " +
       "unless a field name says otherwise (e.g. defaultExpirationTimeInHours). " +
-      "Requests use the caller's own CodeSignal API key; a permission error " +
-      "means the key lacks access to that resource.",
+      "Requests run as the signed-in CodeSignal user or with the caller's own " +
+      "API key; a permission error means that user or key lacks access to the " +
+      "resource.",
   },
   {
     basePath: "/api",
@@ -34,11 +35,12 @@ const mcpHandler = createMcpHandler(
 
 const authedHandler = withMcpAuth(mcpHandler, verifyToken, { required: true });
 
-// withMcpAuth's 401 body is a generic "No authorization provided"; replace it
-// with an actionable message while keeping the WWW-Authenticate header.
+// withMcpAuth answers a missing credential with a bare "No authorization
+// provided"; give it an actionable body. A rejected credential keeps the
+// library's OAuth error.
 async function handler(req: Request): Promise<Response> {
   const response = await authedHandler(req);
-  if (response.status !== 401) {
+  if (response.status !== 401 || hasCredential(req)) {
     return response;
   }
   const headers = new Headers(response.headers);
@@ -53,3 +55,10 @@ async function handler(req: Request): Promise<Response> {
 }
 
 export { handler as GET, handler as POST, handler as DELETE };
+
+// Mirrors what withMcpAuth and verifyToken accept as a credential.
+function hasCredential(req: Request): boolean {
+  const [scheme, token] = req.headers.get("authorization")?.split(" ") ?? [];
+  const hasBearer = scheme?.toLowerCase() === "bearer" && Boolean(token?.trim());
+  return hasBearer || Boolean(req.headers.get("x-codesignal-key")?.trim());
+}

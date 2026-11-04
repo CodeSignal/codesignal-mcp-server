@@ -12,7 +12,7 @@ import {
 import {
   errorResult,
   firstSchema,
-  getApiKey,
+  resolveUpstreamCredential,
   jsonResult,
   offsetSchema,
 } from "./shared";
@@ -195,7 +195,7 @@ export function registerListCertifiedAssessments(server: McpServer) {
     },
     async (args, extra) => {
       try {
-        const apiKey = getApiKey(extra.authInfo);
+        const apiKey = await resolveUpstreamCredential(extra.authInfo);
         const { companyId, globalFilter, first, offset, maxTestsToScan } = args;
 
         let source: "frameworks_query" | "company_tests";
