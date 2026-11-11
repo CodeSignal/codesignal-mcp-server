@@ -24,8 +24,6 @@ export async function verifyUserToken(
   token: string,
   config: OAuthConfig,
 ): Promise<AuthInfo> {
-  // withMcpAuth turns any throw here into a 401, so an unreachable or malformed
-  // authorization server shows up to clients as a rejected token.
   const metadata = await getAuthorizationServerMetadata(config.issuerUrl);
   if (!metadata.jwks_uri) {
     throw new Error("Authorization server metadata has no jwks_uri.");
@@ -40,7 +38,6 @@ export async function verifyUserToken(
       requiredClaims: ["exp", "sub"],
     }));
   } catch (error) {
-    // jose errors carry the decoded claims; only the error code may reach logs.
     const code = error instanceof joseErrors.JOSEError ? error.code : "unknown";
     throw new Error(`Token rejected (${code}).`);
   }

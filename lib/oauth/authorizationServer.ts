@@ -45,8 +45,6 @@ export async function getAuthorizationServerMetadata(
   return promise;
 }
 
-// Candidate URLs in the order the MCP spec prescribes; the well-known suffix goes
-// between host and path for issuers that have a path component (RFC 8414 §3.1).
 function discoveryUrls(issuerUrl: string): string[] {
   const issuer = new URL(issuerUrl);
   const path = issuer.pathname.replace(/\/+$/, "");

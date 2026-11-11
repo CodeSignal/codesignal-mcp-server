@@ -7,7 +7,6 @@ const TOKEN_EXCHANGE_GRANT = "urn:ietf:params:oauth:grant-type:token-exchange";
 const ACCESS_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token";
 const REQUEST_TIMEOUT_MS = 10_000;
 const EXPIRY_MARGIN_MS = 30_000;
-// RFC 6749 only recommends expires_in; cache briefly when it is absent.
 const DEFAULT_LIFETIME_SECONDS = 60;
 const MAX_CACHE_ENTRIES = 1000;
 
@@ -26,8 +25,8 @@ interface CachedToken {
   expiresAt: number;
 }
 
-// Keyed by a hash so user tokens are not retained in memory.
-const cache = new Map<string, CachedToken>();
+type TokenHash = string;
+const cache = new Map<TokenHash, CachedToken>();
 const inFlight = new Map<string, Promise<string>>();
 
 /**
@@ -67,7 +66,6 @@ async function requestExchange(
   config: OAuthConfig,
   audience: string,
 ): Promise<CachedToken> {
-  // RFC 6749 §2.3.1: client credentials are form-urlencoded before Basic encoding.
   const credentials = Buffer.from(
     `${encodeURIComponent(config.clientId)}:${encodeURIComponent(config.clientSecret)}`,
   ).toString("base64");

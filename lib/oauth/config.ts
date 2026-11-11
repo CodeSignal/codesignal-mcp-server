@@ -9,12 +9,7 @@ export interface OAuthConfig {
 
 let warnedIncompleteConfig = false;
 
-/**
- * A partially configured OAuth setup is treated as OAuth off, so API-key callers
- * never pay for a missing secret; the warning is logged once per process.
- */
 export function getOAuthConfig(): OAuthConfig | null {
-  // Issuer identifiers are compared byte for byte (RFC 8414), so keep it verbatim.
   const issuerUrl = process.env.OAUTH_ISSUER_URL?.trim();
   if (!issuerUrl) {
     return null;
