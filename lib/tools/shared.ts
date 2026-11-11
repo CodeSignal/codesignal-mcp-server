@@ -1,8 +1,14 @@
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { AUTH_ERROR_MESSAGE } from "@/lib/auth";
-import { CodeSignalApiError, executeQuery } from "@/lib/codesignal/client";
+import { getAuthErrorMessage, credentialKind } from "@/lib/auth";
+import {
+  CodeSignalApiError,
+  executeQuery,
+  getGraphqlUrl,
+} from "@/lib/codesignal/client";
+import { getOAuthConfig } from "@/lib/oauth/config";
+import { exchangeForApiToken } from "@/lib/oauth/exchangeToken";
 
 export const DEFAULT_PAGE_SIZE = 25;
 export const MAX_PAGE_SIZE = 100;
@@ -22,12 +28,22 @@ export const offsetSchema = z
   .default(0)
   .describe("Number of results to skip, for pagination.");
 
-export function getApiKey(authInfo: AuthInfo | undefined): string {
-  const key = authInfo?.token;
-  if (!key) {
-    throw new CodeSignalApiError(AUTH_ERROR_MESSAGE, 401);
+export async function resolveUpstreamCredential(
+  authInfo: AuthInfo | undefined,
+): Promise<string> {
+  const token = authInfo?.token;
+  if (!token) {
+    throw new CodeSignalApiError(getAuthErrorMessage(), 401);
   }
-  return key;
+  if (credentialKind(authInfo) === "apiKey") {
+    return token;
+  }
+
+  const oauth = getOAuthConfig();
+  if (!oauth) {
+    throw new CodeSignalApiError(getAuthErrorMessage(), 401);
+  }
+  return exchangeForApiToken(token, oauth, getGraphqlUrl());
 }
 
 export function jsonResult(data: unknown): CallToolResult {
@@ -46,8 +62,8 @@ export function errorResult(error: unknown): CallToolResult {
 }
 
 /**
- * Runs a GraphQL document with the caller's key and wraps the result as a tool
- * response. Used by every tool so auth, execution, and error formatting stay
+ * Runs a GraphQL document with the caller's credential and wraps the result as a
+ * tool response. Used by every tool so auth, execution, and error formatting stay
  * identical across reads and writes.
  */
 export async function runGraphql(
@@ -56,7 +72,8 @@ export async function runGraphql(
   variables: Record<string, unknown> = {},
 ): Promise<CallToolResult> {
   try {
-    const data = await executeQuery(getApiKey(authInfo), document, variables);
+    const credential = await resolveUpstreamCredential(authInfo);
+    const data = await executeQuery(credential, document, variables);
     return jsonResult(data);
   } catch (error) {
     return errorResult(error);

@@ -1,17 +1,23 @@
 export const CODESIGNAL_APP_ORIGIN = "https://app.codesignal.com";
-const CODESIGNAL_GRAPHQL_URL = `${CODESIGNAL_APP_ORIGIN}/graphql`;
+const DEFAULT_GRAPHQL_URL = `${CODESIGNAL_APP_ORIGIN}/graphql`;
 const REQUEST_TIMEOUT_MS = 15_000;
 const MAX_RATE_LIMIT_RETRIES = 1;
 const MAX_RETRY_DELAY_MS = 5_000;
 const MAX_ERROR_BODY_CHARS = 300;
 
 const INVALID_KEY_HINT =
-  "CodeSignal rejected the API key. Check that the key is valid and active.";
+  "CodeSignal rejected the credential. Check that the API key is valid and active, " +
+  "or reconnect the connector to sign in again.";
 
 const ACCESS_DENIED_HINT =
-  "This usually means the CodeSignal API key lacks the permission required for this resource " +
-  "(keys carry granular permissions, e.g. reading tests, test sessions, or interviews). " +
-  "Ask CodeSignal support to enable the relevant permission for your key.";
+  "This usually means the signed-in user or the API key lacks the permission required for " +
+  "this resource (keys carry granular permissions, e.g. reading tests, test sessions, or " +
+  "interviews; users are limited to their role). Ask a CodeSignal admin or support to " +
+  "grant the relevant permission.";
+
+export function getGraphqlUrl(): string {
+  return process.env.CODESIGNAL_GRAPHQL_URL?.trim() || DEFAULT_GRAPHQL_URL;
+}
 
 export type CodeSignalErrorCode = "UNAUTHENTICATED" | "FORBIDDEN";
 
@@ -107,19 +113,19 @@ function retryDelayMs(response: Response): number {
  * never leak into logs or tool output. Response payloads are never logged.
  */
 export async function executeQuery<T = unknown>(
-  apiKey: string,
+  credential: string,
   query: string,
   variables: Record<string, unknown> = {},
 ): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     let response: Response;
     try {
-      response = await fetch(CODESIGNAL_GRAPHQL_URL, {
+      response = await fetch(getGraphqlUrl(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${credential}`,
         },
         body: JSON.stringify({ query, variables }),
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

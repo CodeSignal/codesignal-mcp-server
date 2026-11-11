@@ -4,9 +4,13 @@ Remote [MCP](https://modelcontextprotocol.io) server that exposes the [CodeSigna
 
 Built with Next.js and [`mcp-handler`](https://github.com/vercel/mcp-handler). The official MCP endpoint is served at `https://codesignal.com/api/mcp` over streamable HTTP.
 
-## Authentication (bring your own key)
+## Authentication
 
-In production, every request must carry the caller's own CodeSignal API key, which is forwarded to the [CodeSignal GraphQL API](https://developer.codesignal.com/graphql/). The server does not persist or log caller API keys.
+Every request must carry a credential. The server never persists or logs credentials.
+
+### API key (bring your own key)
+
+For clients that support custom headers on remote servers, such as Claude Code, Cursor and Windsurf. The caller's own CodeSignal API key is forwarded to the [CodeSignal GraphQL API](https://developer.codesignal.com/graphql/) on every tool call.
 
 API keys are available on paid CodeSignal plans; see [Creating and Managing API Keys](https://support.codesignal.com/hc/en-us/articles/11151285811223-Creating-and-Managing-API-Keys). Keys carry granular permissions; a permission error from a tool means the key lacks access to that resource.
 
@@ -15,9 +19,16 @@ Provide the key either way:
 - `Authorization: Bearer <your CodeSignal API key>` (preferred)
 - `X-CodeSignal-Key: <your CodeSignal API key>`
 
+### Sign in with CodeSignal (OAuth)
+
+> [!NOTE]
+> Not available yet. The server code supports OAuth sign-in, but it is not enabled on `https://codesignal.com/api/mcp`. Until it is, use an API key.
+
+Meant for MCP clients whose remote-server support is OAuth-only, such as Claude.ai, Claude Desktop and ChatGPT connectors. Once enabled, the user signs in with their CodeSignal account (including SSO) and approves access once; every tool call then runs as that user, limited to their role's permissions. The user's sign-in token is never forwarded to the CodeSignal API.
+
 ## Connecting from a client
 
-The server authenticates with an API key header (no OAuth), so it works with any MCP client that supports custom headers on remote servers. Clients whose remote-server support is OAuth-only (e.g. Claude Desktop connectors) won't work.
+The hosted server authenticates with an API key header today, so it works with any MCP client that supports custom headers on remote servers. Clients whose remote-server support is OAuth-only (e.g. Claude.ai, Claude Desktop and ChatGPT connectors) won't work until [OAuth sign-in](#sign-in-with-codesignal-oauth) is enabled.
 
 Claude Code:
 
@@ -63,20 +74,23 @@ cp .env.example .env   # optional dev-only fallback key
 pnpm dev
 ```
 
-The endpoint runs at `http://localhost:3000/api/mcp`. Outside production only, requests without a key fall back to `CODESIGNAL_API_KEY` from `.env` — treat a local dev server as privileged.
+The endpoint runs at `http://localhost:6272/api/mcp`. Outside production only, requests without a credential fall back to `CODESIGNAL_API_KEY` from `.env` — treat a local dev server as privileged. To exercise OAuth locally, set the OAuth variables from `.env.example`.
 
-Checks: `pnpm typecheck`, `pnpm lint`, `pnpm build`.
+Checks: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`.
 
 ## Deployment
 
-Standard Next.js app — deploy to Vercel (or any Next.js host) with no required environment variables. In production the dev fallback key is disabled and every caller must bring their own key.
+Standard Next.js app — deploy to Vercel (or any Next.js host). In production the dev fallback key is disabled and every caller must bring a credential. API-key auth needs no environment variables. OAuth is enabled by setting `OAUTH_ISSUER_URL`, `OAUTH_CLIENT_ID` and `OAUTH_CLIENT_SECRET`, plus `MCP_RESOURCE_URL` when the server is served from another URL (see `.env.example`); unsetting `OAUTH_ISSUER_URL` turns it off again. `CODESIGNAL_GRAPHQL_URL` overrides the API endpoint.
 
 ## Project layout
 
 - `app/api/mcp/route.ts` — MCP endpoint, auth wrapper, server instructions
-- `lib/auth.ts` — API key extraction (Bearer / `X-CodeSignal-Key`, dev fallback)
+- `app/.well-known/oauth-protected-resource/[[...path]]/route.ts` — OAuth protected resource metadata (RFC 9728)
+- `lib/auth.ts` — credential extraction: OAuth user tokens or API keys (Bearer / `X-CodeSignal-Key`, dev fallback)
+- `lib/oauth/` — authorization server discovery, user token verification, token exchange
 - `lib/codesignal/` — GraphQL client (timeout, rate-limit retry, sanitized errors), query and mutation documents
 - `lib/tools/` — tool registrations (zod input schemas, annotations), shared helpers, registry
+- `tests/` — unit tests for credential handling, run against a stubbed authorization server
 
 ## License
 

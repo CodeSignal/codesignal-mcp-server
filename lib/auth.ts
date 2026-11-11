@@ -1,34 +1,63 @@
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
+import { getOAuthConfig, isOAuthIssuerConfigured } from "@/lib/oauth/config";
+import { looksLikeJwt, verifyUserToken } from "@/lib/oauth/verifyUserToken";
 
-export const AUTH_ERROR_MESSAGE =
-  "Missing CodeSignal API key. Provide your key as a Bearer token " +
-  '("Authorization: Bearer <your CodeSignal API key>") or in an ' +
-  '"X-CodeSignal-Key" header. Keys are issued by CodeSignal — contact ' +
+const API_KEY_INSTRUCTIONS =
+  'as a Bearer token ("Authorization: Bearer <your CodeSignal API key>") or in ' +
+  'an "X-CodeSignal-Key" header. Keys are issued by CodeSignal — contact ' +
   "support@codesignal.com if you do not have one.";
 
+export function getAuthErrorMessage(): string {
+  if (!getOAuthConfig()) {
+    return `Missing CodeSignal API key. Provide your key ${API_KEY_INSTRUCTIONS}`;
+  }
+  return (
+    "Missing credentials. Either sign in with your CodeSignal account (OAuth, " +
+    "used by Claude.ai and ChatGPT connectors) or provide your CodeSignal API key " +
+    API_KEY_INSTRUCTIONS
+  );
+}
+
+export type CredentialKind = "apiKey" | "user";
+
 /**
- * BYOK pass-through "verification": the key is not validated against
- * CodeSignal here (every tool call hits the API with it anyway); we only
- * require that a key is present. The key is carried to tool handlers as
- * `extra.authInfo.token` and is never stored or logged.
+ * A signed JWT is a user token and is verified against the authorization server.
+ * API keys are only required to be present, not validated here: every tool call
+ * hits the CodeSignal API with the key anyway.
  */
 export async function verifyToken(
   req: Request,
   bearerToken?: string,
 ): Promise<AuthInfo | undefined> {
-  const key =
-    bearerToken?.trim() ||
-    req.headers.get("x-codesignal-key")?.trim() ||
-    devFallbackKey();
-
-  if (!key) {
-    return undefined;
+  const bearer = bearerToken?.trim();
+  if (bearer) {
+    if (!looksLikeJwt(bearer)) {
+      return apiKeyAuth(bearer);
+    }
+    const oauth = getOAuthConfig();
+    if (oauth) {
+      return verifyUserToken(bearer, oauth);
+    }
+    if (isOAuthIssuerConfigured()) {
+      throw new Error("Token rejected (OAuth is not fully configured).");
+    }
+    return apiKeyAuth(bearer);
   }
 
+  const key = req.headers.get("x-codesignal-key")?.trim() || devFallbackKey();
+  return key ? apiKeyAuth(key) : undefined;
+}
+
+export function credentialKind(authInfo: AuthInfo | undefined): CredentialKind {
+  return authInfo?.extra?.credential === "user" ? "user" : "apiKey";
+}
+
+function apiKeyAuth(key: string): AuthInfo {
   return {
     token: key,
     clientId: "codesignal-mcp",
     scopes: [],
+    extra: { credential: "apiKey" satisfies CredentialKind },
   };
 }
 

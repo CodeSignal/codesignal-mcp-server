@@ -2,7 +2,7 @@
   "name": "codesignal-mcp",
   "version": "1.0.0",
   "private": true,
-  "description": "Remote MCP server exposing CodeSignal GraphQL read and write tools with bring-your-own-key auth",
+  "description": "Remote MCP server exposing CodeSignal GraphQL read and write tools, with OAuth sign-in or bring-your-own-key auth",
   "license": "Apache-2.0",
   "author": "CodeSignal",
   "repository": {
@@ -14,14 +14,16 @@
     "url": "https://github.com/CodeSignal/codesignal-mcp-server/issues"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 6272",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.26.0",
+    "jose": "6.2.3",
     "mcp-handler": "1.1.0",
     "next": "16.2.8",
     "react": "^19.2.7",
@@ -34,6 +36,7 @@
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.39.4",
     "eslint-config-next": "16.2.8",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
   }
 }
