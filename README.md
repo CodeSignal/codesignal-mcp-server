@@ -6,13 +6,7 @@ Built with Next.js and [`mcp-handler`](https://github.com/vercel/mcp-handler). T
 
 ## Authentication
 
-Every request must carry a credential. The server never persists or logs credentials, and never forwards a user's sign-in token to the CodeSignal API.
-
-### Sign in with CodeSignal (OAuth)
-
-For MCP clients whose remote-server support is OAuth-only, such as Claude.ai and ChatGPT connectors. The user signs in with their CodeSignal account (including SSO) and approves access once; every tool call then runs as that user, limited to their role's permissions.
-
-Add `https://codesignal.com/api/mcp` as a custom connector, choose to use your own OAuth client ("Use your own OAuth client" in Claude, "predefined OAuth client" in ChatGPT), and enter the client ID published by CodeSignal; leave the secret blank unless CodeSignal gave you one.
+Every request must carry a credential. The server never persists or logs credentials.
 
 ### API key (bring your own key)
 
@@ -25,9 +19,16 @@ Provide the key either way:
 - `Authorization: Bearer <your CodeSignal API key>` (preferred)
 - `X-CodeSignal-Key: <your CodeSignal API key>`
 
+### Sign in with CodeSignal (OAuth)
+
+> [!NOTE]
+> Not available yet. The server code supports OAuth sign-in, but it is not enabled on `https://codesignal.com/api/mcp`. Until it is, use an API key.
+
+Meant for MCP clients whose remote-server support is OAuth-only, such as Claude.ai, Claude Desktop and ChatGPT connectors. Once enabled, the user signs in with their CodeSignal account (including SSO) and approves access once; every tool call then runs as that user, limited to their role's permissions. The user's sign-in token is never forwarded to the CodeSignal API.
+
 ## Connecting from a client
 
-Claude.ai, Claude Desktop and ChatGPT: add `https://codesignal.com/api/mcp` as a custom connector and sign in when prompted (see [Sign in with CodeSignal](#sign-in-with-codesignal-oauth)).
+The hosted server authenticates with an API key header today, so it works with any MCP client that supports custom headers on remote servers. Clients whose remote-server support is OAuth-only (e.g. Claude.ai, Claude Desktop and ChatGPT connectors) won't work until [OAuth sign-in](#sign-in-with-codesignal-oauth) is enabled.
 
 Claude Code:
 

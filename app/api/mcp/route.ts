@@ -1,5 +1,5 @@
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
-import { AUTH_ERROR_MESSAGE, verifyToken } from "@/lib/auth";
+import { getAuthErrorMessage, verifyToken } from "@/lib/auth";
 import { getOAuthConfig } from "@/lib/oauth/config";
 import { registerAllTools } from "@/lib/tools/registry";
 
@@ -50,7 +50,7 @@ async function handler(req: Request): Promise<Response> {
   return new Response(
     JSON.stringify({
       error: "invalid_token",
-      error_description: AUTH_ERROR_MESSAGE,
+      error_description: getAuthErrorMessage(),
     }),
     { status: 401, headers },
   );

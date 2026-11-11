@@ -1,7 +1,7 @@
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { AUTH_ERROR_MESSAGE, credentialKind } from "@/lib/auth";
+import { getAuthErrorMessage, credentialKind } from "@/lib/auth";
 import {
   CodeSignalApiError,
   executeQuery,
@@ -33,7 +33,7 @@ export async function resolveUpstreamCredential(
 ): Promise<string> {
   const token = authInfo?.token;
   if (!token) {
-    throw new CodeSignalApiError(AUTH_ERROR_MESSAGE, 401);
+    throw new CodeSignalApiError(getAuthErrorMessage(), 401);
   }
   if (credentialKind(authInfo) === "apiKey") {
     return token;
@@ -41,7 +41,7 @@ export async function resolveUpstreamCredential(
 
   const oauth = getOAuthConfig();
   if (!oauth) {
-    throw new CodeSignalApiError(AUTH_ERROR_MESSAGE, 401);
+    throw new CodeSignalApiError(getAuthErrorMessage(), 401);
   }
   return exchangeForApiToken(token, oauth, getGraphqlUrl());
 }

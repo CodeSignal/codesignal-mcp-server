@@ -2,12 +2,21 @@ import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import { getOAuthConfig } from "@/lib/oauth/config";
 import { looksLikeJwt, verifyUserToken } from "@/lib/oauth/verifyUserToken";
 
-export const AUTH_ERROR_MESSAGE =
-  "Missing credentials. Either sign in with your CodeSignal account (OAuth, " +
-  "used by Claude.ai and ChatGPT connectors) or provide your CodeSignal API key " +
+const API_KEY_INSTRUCTIONS =
   'as a Bearer token ("Authorization: Bearer <your CodeSignal API key>") or in ' +
   'an "X-CodeSignal-Key" header. Keys are issued by CodeSignal — contact ' +
   "support@codesignal.com if you do not have one.";
+
+export function getAuthErrorMessage(): string {
+  if (!getOAuthConfig()) {
+    return `Missing CodeSignal API key. Provide your key ${API_KEY_INSTRUCTIONS}`;
+  }
+  return (
+    "Missing credentials. Either sign in with your CodeSignal account (OAuth, " +
+    "used by Claude.ai and ChatGPT connectors) or provide your CodeSignal API key " +
+    API_KEY_INSTRUCTIONS
+  );
+}
 
 export type CredentialKind = "apiKey" | "user";
 

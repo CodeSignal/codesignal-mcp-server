@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { verifyToken } from "@/lib/auth";
+import { getAuthErrorMessage, verifyToken } from "@/lib/auth";
 import { startFakeAuthorizationServer, stubOAuthEnv } from "./fakeAuthorizationServer";
 
 const MCP_URL = "https://mcp.test/api/mcp";
@@ -55,5 +55,18 @@ describe("verifyToken with OAuth disabled", () => {
 
   it("returns nothing when no credential is sent", async () => {
     expect(await verifyToken(new Request(MCP_URL))).toBeUndefined();
+  });
+});
+
+describe("getAuthErrorMessage", () => {
+  it("only asks for an API key while OAuth is disabled", () => {
+    expect(getAuthErrorMessage()).toMatch(/^Missing CodeSignal API key\./);
+    expect(getAuthErrorMessage()).not.toContain("sign in");
+  });
+
+  it("offers sign-in once OAuth is enabled", () => {
+    stubOAuthEnv();
+
+    expect(getAuthErrorMessage()).toContain("sign in with your CodeSignal account");
   });
 });
