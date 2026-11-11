@@ -14,7 +14,7 @@
     "url": "https://github.com/CodeSignal/codesignal-mcp-server/issues"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 6272",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

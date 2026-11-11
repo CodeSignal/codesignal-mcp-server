@@ -73,7 +73,7 @@ cp .env.example .env   # optional dev-only fallback key
 pnpm dev
 ```
 
-The endpoint runs at `http://localhost:3000/api/mcp`. Outside production only, requests without a credential fall back to `CODESIGNAL_API_KEY` from `.env` — treat a local dev server as privileged. To exercise OAuth locally, set the OAuth variables from `.env.example`.
+The endpoint runs at `http://localhost:6272/api/mcp`. Outside production only, requests without a credential fall back to `CODESIGNAL_API_KEY` from `.env` — treat a local dev server as privileged. To exercise OAuth locally, set the OAuth variables from `.env.example`.
 
 Checks: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`.
 
