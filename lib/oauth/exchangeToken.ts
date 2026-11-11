@@ -11,9 +11,15 @@ const EXPIRY_MARGIN_MS = 30_000;
 const DEFAULT_LIFETIME_SECONDS = 60;
 const MAX_CACHE_ENTRIES = 1000;
 
-const EXCHANGE_FAILED_HINT =
+const RECONNECT_HINT =
   "CodeSignal could not exchange your sign-in for API access. " +
   "Reconnect the CodeSignal connector and try again.";
+
+const UNAVAILABLE_HINT =
+  "CodeSignal sign-in is temporarily unavailable. Try again in a moment; " +
+  "if it keeps failing, contact support@codesignal.com.";
+
+const REJECTED_SIGN_IN_ERROR = "invalid_grant";
 
 interface CachedToken {
   accessToken: string;
@@ -61,7 +67,6 @@ async function requestExchange(
   config: OAuthConfig,
   audience: string,
 ): Promise<CachedToken> {
-  const metadata = await getAuthorizationServerMetadata(config.issuerUrl);
   // RFC 6749 §2.3.1: client credentials are form-urlencoded before Basic encoding.
   const credentials = Buffer.from(
     `${encodeURIComponent(config.clientId)}:${encodeURIComponent(config.clientSecret)}`,
@@ -69,6 +74,7 @@ async function requestExchange(
 
   let response: Response;
   try {
+    const metadata = await getAuthorizationServerMetadata(config.issuerUrl);
     response = await fetch(metadata.token_endpoint, {
       method: "POST",
       headers: {
@@ -85,17 +91,24 @@ async function requestExchange(
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       cache: "no-store",
     });
-  } catch {
-    throw new CodeSignalApiError(EXCHANGE_FAILED_HINT, 401, "UNAUTHENTICATED");
+  } catch (error) {
+    throw unavailableError(error instanceof Error ? error.name : "unknown error");
   }
 
   const body: unknown = await response.json().catch(() => null);
-  if (!response.ok || !isTokenResponse(body)) {
-    throw new CodeSignalApiError(
-      `${EXCHANGE_FAILED_HINT} (${describeFailure(response.status, body)})`,
-      401,
-      "UNAUTHENTICATED",
-    );
+  if (!response.ok) {
+    const failure = describeFailure(response.status, body);
+    if (oauthErrorCode(body) === REJECTED_SIGN_IN_ERROR) {
+      throw new CodeSignalApiError(
+        `${RECONNECT_HINT} (${failure})`,
+        401,
+        "UNAUTHENTICATED",
+      );
+    }
+    throw unavailableError(failure);
+  }
+  if (!isTokenResponse(body)) {
+    throw unavailableError(`malformed token response, HTTP ${response.status}`);
   }
 
   const lifetimeSeconds =
@@ -116,13 +129,22 @@ function isTokenResponse(
   );
 }
 
-// Only the OAuth error code is surfaced; descriptions could echo request data.
-function describeFailure(status: number, body: unknown): string {
+function unavailableError(failure: string): CodeSignalApiError {
+  console.error(`Token exchange failed (${failure}).`);
+  return new CodeSignalApiError(`${UNAVAILABLE_HINT} (${failure})`, 503);
+}
+
+function oauthErrorCode(body: unknown): string | undefined {
   const code =
     typeof body === "object" && body !== null
       ? (body as { error?: unknown }).error
       : undefined;
-  return typeof code === "string" ? `${code}, HTTP ${status}` : `HTTP ${status}`;
+  return typeof code === "string" ? code : undefined;
+}
+
+function describeFailure(status: number, body: unknown): string {
+  const code = oauthErrorCode(body);
+  return code ? `${code}, HTTP ${status}` : `HTTP ${status}`;
 }
 
 function remember(cacheKey: string, token: CachedToken) {

@@ -1,5 +1,6 @@
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { AUTH_ERROR_MESSAGE, verifyToken } from "@/lib/auth";
+import { getOAuthConfig } from "@/lib/oauth/config";
 import { registerAllTools } from "@/lib/tools/registry";
 
 export const maxDuration = 60;
@@ -33,11 +34,12 @@ const mcpHandler = createMcpHandler(
   },
 );
 
-const authedHandler = withMcpAuth(mcpHandler, verifyToken, { required: true });
+const oauthConfig = getOAuthConfig();
+const authedHandler = withMcpAuth(mcpHandler, verifyToken, {
+  required: true,
+  resourceUrl: oauthConfig ? new URL(oauthConfig.resourceUrl).origin : undefined,
+});
 
-// withMcpAuth answers a missing credential with a bare "No authorization
-// provided"; give it an actionable body. A rejected credential keeps the
-// library's OAuth error.
 async function handler(req: Request): Promise<Response> {
   const response = await authedHandler(req);
   if (response.status !== 401 || hasCredential(req)) {
@@ -56,7 +58,6 @@ async function handler(req: Request): Promise<Response> {
 
 export { handler as GET, handler as POST, handler as DELETE };
 
-// Mirrors what withMcpAuth and verifyToken accept as a credential.
 function hasCredential(req: Request): boolean {
   const [scheme, token] = req.headers.get("authorization")?.split(" ") ?? [];
   const hasBearer = scheme?.toLowerCase() === "bearer" && Boolean(token?.trim());

@@ -75,7 +75,7 @@ pnpm dev
 
 The endpoint runs at `http://localhost:3000/api/mcp`. Outside production only, requests without a credential fall back to `CODESIGNAL_API_KEY` from `.env` — treat a local dev server as privileged. To exercise OAuth locally, set the OAuth variables from `.env.example`.
 
-Checks: `pnpm typecheck`, `pnpm lint`, `pnpm build`.
+Checks: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`.
 
 ## Deployment
 
@@ -84,11 +84,12 @@ Standard Next.js app — deploy to Vercel (or any Next.js host). In production t
 ## Project layout
 
 - `app/api/mcp/route.ts` — MCP endpoint, auth wrapper, server instructions
-- `app/.well-known/oauth-protected-resource/route.ts` — OAuth protected resource metadata (RFC 9728)
+- `app/.well-known/oauth-protected-resource/[[...path]]/route.ts` — OAuth protected resource metadata (RFC 9728)
 - `lib/auth.ts` — credential extraction: OAuth user tokens or API keys (Bearer / `X-CodeSignal-Key`, dev fallback)
 - `lib/oauth/` — authorization server discovery, user token verification, token exchange
 - `lib/codesignal/` — GraphQL client (timeout, rate-limit retry, sanitized errors), query and mutation documents
 - `lib/tools/` — tool registrations (zod input schemas, annotations), shared helpers, registry
+- `tests/` — unit tests for credential handling, run against a stubbed authorization server
 
 ## License
 
