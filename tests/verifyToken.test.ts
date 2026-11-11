@@ -10,8 +10,12 @@ beforeAll(async () => {
   server = await startFakeAuthorizationServer();
 });
 
+// Keeps credentials exported in the developer's shell out of the tests.
 beforeEach(() => {
   vi.stubEnv("CODESIGNAL_API_KEY", "");
+  vi.stubEnv("OAUTH_ISSUER_URL", "");
+  vi.stubEnv("OAUTH_CLIENT_ID", "");
+  vi.stubEnv("OAUTH_CLIENT_SECRET", "");
 });
 
 afterEach(() => {
@@ -39,6 +43,31 @@ describe("verifyToken with OAuth enabled", () => {
     const authInfo = await verifyToken(new Request(MCP_URL), "opaque-api-key");
 
     expect(authInfo?.token).toBe("opaque-api-key");
+    expect(authInfo?.extra?.credential).toBe("apiKey");
+  });
+});
+
+describe("verifyToken with OAuth partly configured", () => {
+  beforeEach(() => {
+    vi.stubEnv("OAUTH_ISSUER_URL", "https://auth.test");
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("rejects a JWT instead of passing it on as an API key", async () => {
+    const token = await server.signUserToken();
+
+    await expect(verifyToken(new Request(MCP_URL), token)).rejects.toThrow(
+      "Token rejected (OAuth is not fully configured).",
+    );
+  });
+
+  it("still treats an opaque bearer as an API key", async () => {
+    const authInfo = await verifyToken(new Request(MCP_URL), "opaque-api-key");
+
     expect(authInfo?.extra?.credential).toBe("apiKey");
   });
 });

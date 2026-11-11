@@ -83,8 +83,20 @@ async function fetchMetadata(
         "Authorization server metadata issuer does not match OAUTH_ISSUER_URL.",
       );
     }
+    assertOnIssuerOrigin(metadata.token_endpoint, "token_endpoint", issuerUrl);
+    if (metadata.jwks_uri) {
+      assertOnIssuerOrigin(metadata.jwks_uri, "jwks_uri", issuerUrl);
+    }
     return metadata;
   }
 
   throw new Error("Authorization server metadata not found.");
+}
+
+function assertOnIssuerOrigin(url: string, field: string, issuerUrl: string) {
+  if (new URL(url).origin !== new URL(issuerUrl).origin) {
+    throw new Error(
+      `Authorization server metadata ${field} is not on the issuer's origin.`,
+    );
+  }
 }

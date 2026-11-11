@@ -9,6 +9,10 @@ export interface OAuthConfig {
 
 let warnedIncompleteConfig = false;
 
+export function isOAuthIssuerConfigured(): boolean {
+  return Boolean(process.env.OAUTH_ISSUER_URL?.trim());
+}
+
 export function getOAuthConfig(): OAuthConfig | null {
   const issuerUrl = process.env.OAUTH_ISSUER_URL?.trim();
   if (!issuerUrl) {

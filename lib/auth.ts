@@ -1,5 +1,5 @@
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
-import { getOAuthConfig } from "@/lib/oauth/config";
+import { getOAuthConfig, isOAuthIssuerConfigured } from "@/lib/oauth/config";
 import { looksLikeJwt, verifyUserToken } from "@/lib/oauth/verifyUserToken";
 
 const API_KEY_INSTRUCTIONS =
@@ -31,9 +31,15 @@ export async function verifyToken(
 ): Promise<AuthInfo | undefined> {
   const bearer = bearerToken?.trim();
   if (bearer) {
-    const oauth = looksLikeJwt(bearer) ? getOAuthConfig() : null;
+    if (!looksLikeJwt(bearer)) {
+      return apiKeyAuth(bearer);
+    }
+    const oauth = getOAuthConfig();
     if (oauth) {
       return verifyUserToken(bearer, oauth);
+    }
+    if (isOAuthIssuerConfigured()) {
+      throw new Error("Token rejected (OAuth is not fully configured).");
     }
     return apiKeyAuth(bearer);
   }
