@@ -34,17 +34,21 @@ Clients are registered with CodeSignal ahead of time, so there is no dynamic cli
 
 ### Claude.ai and Claude Desktop
 
-1. Open **Settings → Connectors** and choose **Add custom connector**.
-2. Enter `https://codesignal.com/api/mcp` as the server URL.
-3. Under **Advanced settings**, enter the Claude client ID from the table above and leave the client secret empty.
-4. Choose **Connect**, sign in to CodeSignal and allow access.
+Add the server as a custom connector, following Anthropic's guide to [custom connectors](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp). Use these values:
+
+- Server URL: `https://codesignal.com/api/mcp`
+- OAuth client: your own, with the Claude client ID from the table above and no client secret
+
+Then connect, sign in to CodeSignal and allow access. On Team and Enterprise plans, an owner adds the connector for the organization first.
 
 ### ChatGPT
 
-1. On [chatgpt.com](https://chatgpt.com), open **Plugins** and choose **Add custom MCP server**. In a workspace, this needs the "Create plugins with MCPs" permission.
-2. Enter `https://codesignal.com/api/mcp` as the server URL and pick OAuth.
-3. Enter the ChatGPT client ID from the table above and leave the client secret empty.
-4. Sign in to CodeSignal and allow access.
+Add the server as a custom MCP server, following OpenAI's guide to [connecting custom MCP servers](https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt). Use these values:
+
+- Server URL: `https://codesignal.com/api/mcp`
+- Authentication: OAuth, with the ChatGPT client ID from the table above and no client secret
+
+Then sign in to CodeSignal, allow access and install the plugin. In a conversation, type `@` and pick it to use the tools.
 
 ### Clients with custom headers
 
