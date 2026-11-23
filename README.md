@@ -21,14 +21,38 @@ Provide the key either way:
 
 ### Sign in with CodeSignal (OAuth)
 
-> [!NOTE]
-> Not available yet. The server code supports OAuth sign-in, but it is not enabled on `https://codesignal.com/api/mcp`. Until it is, use an API key.
+For MCP clients whose remote-server support is OAuth-only, such as Claude.ai, Claude Desktop and ChatGPT. The user signs in with their CodeSignal account and approves access once; every tool call then runs as that user, limited to their role's permissions. The user's sign-in token is never forwarded to the CodeSignal API.
 
-Meant for MCP clients whose remote-server support is OAuth-only, such as Claude.ai, Claude Desktop and ChatGPT connectors. Once enabled, the user signs in with their CodeSignal account (including SSO) and approves access once; every tool call then runs as that user, limited to their role's permissions. The user's sign-in token is never forwarded to the CodeSignal API.
+Clients are registered with CodeSignal ahead of time, so there is no dynamic client registration. Each supported client has a public client ID and needs no client secret:
+
+| Client | OAuth client ID |
+| --- | --- |
+| Claude | `GEv8PbrhX5EDvDREN` |
+| ChatGPT | `k6Y9ngkHpcM6h5me9` |
 
 ## Connecting from a client
 
-The hosted server authenticates with an API key header today, so it works with any MCP client that supports custom headers on remote servers. Clients whose remote-server support is OAuth-only (e.g. Claude.ai, Claude Desktop and ChatGPT connectors) won't work until [OAuth sign-in](#sign-in-with-codesignal-oauth) is enabled.
+### Claude.ai and Claude Desktop
+
+Add the server as a custom connector, following Anthropic's guide to [custom connectors](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp). Use these values:
+
+- Server URL: `https://codesignal.com/api/mcp`
+- OAuth client: your own, with the Claude client ID from the table above and no client secret
+
+Then connect, sign in to CodeSignal and allow access. On Team and Enterprise plans, an owner adds the connector for the organization first.
+
+### ChatGPT
+
+Add the server as a custom MCP server, following OpenAI's guide to [connecting custom MCP servers](https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt). Use these values:
+
+- Server URL: `https://codesignal.com/api/mcp`
+- Authentication: OAuth, with the ChatGPT client ID from the table above and no client secret
+
+Then sign in to CodeSignal, allow access and install the plugin. In a conversation, type `@` and pick it to use the tools.
+
+### Clients with custom headers
+
+Any MCP client that supports custom headers on remote servers can connect with an [API key](#api-key-bring-your-own-key).
 
 Claude Code:
 
